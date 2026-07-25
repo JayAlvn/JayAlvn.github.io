@@ -1,0 +1,60 @@
+---
+import { Image } from 'astro:assets';
+import photoLakes from '../assets/photos/tatra-lakes-from-above.jpg';
+import photoMeadow from '../assets/photos/forest-meadow.jpg';
+import photoSlopes from '../assets/photos/mountain-lake-slopes.jpg';
+import photoSummit from '../assets/photos/summit-panorama.jpg';
+
+// TODO: replace the remaining placeholder descriptions once provided
+const photos = [
+	{
+		src: photoLakes,
+		alt: 'Two mountain lakes seen from above in the Tatras',
+		heading: 'Tiered lakes nestled in a mountain valley',
+		description:
+			'I captured this shot while descending from the summit of the Rysy ' +
+			'mountain. It overlooks two glacial lakes, with Czarny Staw (the ' +
+			'Black Pond) in the immediate foreground and Morskie Oko (Eye of ' +
+			'the Sea) further down the valley. The lighting is what makes this ' +
+			'moment particularly unique: the sun illuminates the rugged, rocky ' +
+			'ridges while the lake reflects the warm blue color of the sky. It ' +
+			'culminates in what is, by far, one of the most picturesque and ' +
+			'spellbinding photos I have ever taken.',
+	},
+	{
+		src: photoSlopes,
+		alt: 'Green slopes rising over a dark mountain lake',
+		description: 'Description coming soon.',
+	},
+	{
+		src: photoSummit,
+		alt: 'Panorama of mountain ridges from a rocky summit',
+		description: 'Description coming soon.',
+	},
+	{
+		src: photoMeadow,
+		alt: 'Sunlit meadow framed by forest trees',
+		description: 'Description coming soon.',
+	},
+];
+---
+
+{/* outside the panel: its rise-in animation would drag absolutely
+    positioned children along and make them jump when it ends */}
+<p class="photos-note">(Shot on iPhone 13)</p>
+<p class="photos-hint">Click the photo to enlarge and see description.</p>
+<section class="panel panel-photos" data-panel="photos" hidden>
+	<div class="photo-strip" id="photo-strip">
+		{photos.map((photo) => (
+			<Image
+				src={photo.src}
+				alt={photo.alt}
+				data-heading={photo.heading}
+				data-description={photo.description}
+				width={900}
+				format="webp"
+				loading="lazy"
+			/>
+		))}
+	</div>
+</section>

@@ -1,17 +1,46 @@
 ---
-
+import Sidebar from '../components/Sidebar.astro';
+import ProjectsPanel from '../components/ProjectsPanel.astro';
+import CvPanel from '../components/CvPanel.astro';
+import PhotosPanel from '../components/PhotosPanel.astro';
+import '../styles/global.css';
 ---
 
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<title>Portfolio</title>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Special+Gothic+Expanded+One&display=swap"
+			rel="stylesheet"
+		/>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<div id="vanta-bg" aria-hidden="true"></div>
+
+		<Sidebar />
+
+		<button class="back" id="back-btn">&larr; Back</button>
+
+		<main class="content">
+			<ProjectsPanel />
+			<CvPanel />
+			<PhotosPanel />
+			<div class="shot-backdrop" id="shot-backdrop" aria-hidden="true"></div>
+			<aside class="shot-caption" id="shot-caption"></aside>
+		</main>
+
+		<script>
+			import '../scripts/scene-dive';
+			import '../scripts/photo-strip';
+			import '../scripts/shot-lightbox';
+			import '../scripts/copy-email';
+		</script>
 	</body>
 </html>

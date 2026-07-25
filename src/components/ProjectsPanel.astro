@@ -1,0 +1,59 @@
+---
+import { Image } from 'astro:assets';
+import fragDark from '../assets/projects/fraud-high-risk-dark.png';
+import fragLight from '../assets/projects/config-low-risk-light.png';
+---
+
+<section class="panel panel-projects" data-panel="projects" hidden>
+	<article class="project">
+		<header class="project-head">
+			<h2 class="project-name">F-RAG — Fraud Detection RAG Pipeline</h2>
+			<a
+				class="project-link"
+				href="https://github.com/JayAlvn/Fraud-Detection-RAG-Pipeline"
+				target="_blank"
+				rel="noopener"
+			>
+				View on GitHub &nearr;
+			</a>
+		</header>
+		<p class="project-meta">
+			Python · FastAPI · ChromaDB · sentence-transformers · Llama 3.2
+			via Ollama · Tauri · React · TypeScript
+		</p>
+		<p>
+			A desktop application that uses Retrieval-Augmented Generation
+			to analyse enterprise documents, answer questions about them,
+			and flag fraud risk with a confidence-scored, source-cited
+			breakdown for human review.
+		</p>
+		<figure class="project-shot">
+			<Image
+				src={fragDark}
+				alt="F-RAG scoring a suspicious invoice 80 / HIGH, with a risk-factor breakdown and the cited source passage"
+				width={1200}
+				format="webp"
+				loading="lazy"
+			/>
+			<figcaption>
+				Fraud detected — a suspicious payment request is scored
+				80&nbsp;/&nbsp;HIGH, with the contributing risk factors broken
+				down and the exact source passage cited.
+			</figcaption>
+		</figure>
+		<figure class="project-shot">
+			<Image
+				src={fragLight}
+				alt="F-RAG scoring a clean configuration-management document 0 / LOW, shown in the light theme"
+				width={1200}
+				format="webp"
+				loading="lazy"
+			/>
+			<figcaption>
+				Clean document — a normal reference file is correctly scored
+				0&nbsp;/&nbsp;LOW; the model does not invent risk where there
+				is none.
+			</figcaption>
+		</figure>
+	</article>
+</section>
