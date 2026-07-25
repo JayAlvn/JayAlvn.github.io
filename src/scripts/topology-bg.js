@@ -22,7 +22,7 @@ p5.disableFriendlyErrors = true;
 
 // the sky is drawn in CSS (#vanta-bg gradient); the canvas holds only trails,
 // so the fade works in alpha, not colour — there's no background constant
-const FADE_ALPHA = 4; // 0-255 per-frame alpha decay; lower = longer-lived trails
+const FADE_ALPHA = 6; // 0-255 per-frame alpha decay; higher = shorter trails
 const PARTICLE_COUNT = 5000;
 const LIFE_MIN = 600; // star lifetime in frames before respawning elsewhere
 const LIFE_MAX = 1400;
@@ -46,11 +46,11 @@ const SIN_O = Math.sin(OMEGA);
 // every trail's length at once. STAR_WIDTH thickens the brightest types so they
 // stand out as the boldest streaks
 const STAR_TYPES = [
-	`rgba(196, 210, 246, 0.035)`, // faint blue-white — short, sparse (majority)
-	`rgba(210, 220, 250, 0.07)`, // medium blue-white
-	`rgba(232, 240, 255, 0.12)`, // bright white-blue
-	`rgba(255, 255, 255, 0.18)`, // brilliant white — long, bold (few)
-	`rgba(255, 226, 196, 0.06)`, // warm accent (rare)
+	`rgba(196, 210, 246, 0.028)`, // faint blue-white — short, sparse (majority)
+	`rgba(210, 220, 250, 0.055)`, // medium blue-white
+	`rgba(232, 240, 255, 0.095)`, // bright white-blue
+	`rgba(255, 255, 255, 0.145)`, // brilliant white — long, bold (few)
+	`rgba(255, 226, 196, 0.048)`, // warm accent (rare)
 ];
 const STAR_WIDTH = [1, 1, 1.2, 1.6, 1];
 

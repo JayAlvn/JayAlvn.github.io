@@ -26,6 +26,7 @@ const tabs = [
 				<button
 					class="tab"
 					data-tab={tab.id}
+					data-index={String(i + 1).padStart(2, '0')}
 					style={`--delay: ${(i + 1) * 0.18}s`}
 					{...(tab.id === 'contacts'
 						? { 'aria-expanded': 'false', 'aria-controls': 'socials' }

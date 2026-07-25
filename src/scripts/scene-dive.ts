@@ -154,6 +154,19 @@ contactsTab.addEventListener('click', () => {
 	contactsTab.setAttribute('aria-expanded', String(open));
 });
 
+// number-key shortcuts: 1-4 select the correspondingly-indexed tab — the
+// same 01-04 shown in the gutter. Each key just triggers that tab's own
+// click, so it inherits every behaviour: the dive for Projects/Experience/
+// Photos, the socials toggle for Contacts, and the "ignore while immersed"
+// guard (press Back or Escape first to switch)
+const numberedTabs = [...document.querySelectorAll<HTMLButtonElement>('.tab')];
+window.addEventListener('keydown', (e) => {
+	if (e.metaKey || e.ctrlKey || e.altKey) return;
+	const i = Number(e.key) - 1;
+	if (!Number.isInteger(i) || i < 0 || i >= numberedTabs.length) return;
+	numberedTabs[i].click();
+});
+
 function returnHome() {
 	startDiveWindow();
 	document.body.classList.remove('immersed');
