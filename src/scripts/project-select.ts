@@ -29,6 +29,18 @@ function show(id: string | null, quick: boolean) {
 			d.querySelectorAll('video').forEach((v) => v.pause());
 		}
 		d.hidden = hide;
+		// the autoplay attribute alone never fires here: these articles are
+		// display:none at first paint and the file is preload="none", so the
+		// browser has nothing to start. Kick it off once the article is
+		// actually shown — after `hidden` is cleared, never before, or the
+		// element is still unrenderable. play() rejects when a browser
+		// refuses autoplay, which is fine and must be swallowed: an
+		// unhandled rejection would surface as a console error
+		if (!hide) {
+			d.querySelectorAll<HTMLVideoElement>('video[autoplay]').forEach(
+				(v) => void v.play().catch(() => {})
+			);
+		}
 	});
 	panel?.classList.toggle('project-open', id !== null);
 	panel?.classList.toggle('shelf-quick', quick);
