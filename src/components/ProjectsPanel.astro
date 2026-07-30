@@ -1,59 +1,120 @@
 ---
 import { Image } from 'astro:assets';
-import fragDark from '../assets/projects/fraud-high-risk-dark.png';
-import fragLight from '../assets/projects/config-low-risk-light.png';
+import { projects } from '../data/projects';
+
+// Content lives in src/data/projects.ts — this file is only the shape it
+// gets rendered in.
+//
+// Two layers, both server-rendered: the shelf of cards you choose from,
+// and every project's full write-up sitting behind it, revealed one at a
+// time by project-select.ts. The write-ups are rendered up front rather
+// than injected on demand because shot-lightbox.ts binds click-to-enlarge
+// once at load over `.project-shot img` — a shot added later would never
+// become clickable.
 ---
 
 <section class="panel panel-projects" data-panel="projects" hidden>
-	<article class="project">
-		<header class="project-head">
-			<h2 class="project-name">F-RAG — Fraud Detection RAG Pipeline</h2>
-			<a
-				class="project-link"
-				href="https://github.com/JayAlvn/Fraud-Detection-RAG-Pipeline"
-				target="_blank"
-				rel="noopener"
-			>
-				View on GitHub &nearr;
-			</a>
-		</header>
-		<p class="project-meta">
-			Python · FastAPI · ChromaDB · sentence-transformers · Llama 3.2
-			via Ollama · Tauri · React · TypeScript
-		</p>
-		<p>
-			A desktop application that uses Retrieval-Augmented Generation
-			to analyse enterprise documents, answer questions about them,
-			and flag fraud risk with a confidence-scored, source-cited
-			breakdown for human review.
-		</p>
-		<figure class="project-shot">
-			<Image
-				src={fragDark}
-				alt="F-RAG scoring a suspicious invoice 80 / HIGH, with a risk-factor breakdown and the cited source passage"
-				width={1200}
-				format="webp"
-				loading="lazy"
-			/>
-			<figcaption>
-				Fraud detected — a suspicious payment request is scored
-				80&nbsp;/&nbsp;HIGH, with the contributing risk factors broken
-				down and the exact source passage cited.
-			</figcaption>
-		</figure>
-		<figure class="project-shot">
-			<Image
-				src={fragLight}
-				alt="F-RAG scoring a clean configuration-management document 0 / LOW, shown in the light theme"
-				width={1200}
-				format="webp"
-				loading="lazy"
-			/>
-			<figcaption>
-				Clean document — a normal reference file is correctly scored
-				0&nbsp;/&nbsp;LOW; the model does not invent risk where there
-				is none.
-			</figcaption>
-		</figure>
-	</article>
+	<ul class="project-shelf">
+		{projects.map((project, i) => (
+			<li>
+				<button
+					class="project-card"
+					type="button"
+					data-project={project.id}
+					style={`--delay: ${0.4 + i * 0.08}s; --quick-delay: ${i * 0.05}s`}
+				>
+					{/* the picture carries no information the heading doesn't,
+					    so it stays out of the accessibility tree rather than
+					    making a screen reader sit through it twice. A project
+					    with no shot yet keeps the same proportions and shows
+					    its number instead, so the shelf stays even and the
+					    card reads as awaiting a picture rather than broken */}
+					{project.thumb ? (
+						<Image
+							class="card-shot"
+							src={project.thumb}
+							alt=""
+							width={720}
+							format="webp"
+							loading="lazy"
+						/>
+					) : (
+						<span class="card-shot card-shot-blank" aria-hidden="true">
+							{String(i + 1).padStart(2, '0')}
+						</span>
+					)}
+					<span class="card-body">
+						<span class="card-index">
+							{String(i + 1).padStart(2, '0')}
+						</span>
+						<span class="card-name">{project.short}</span>
+						<span class="card-tagline">{project.tagline}</span>
+						<span class="card-hook">{project.hook}</span>
+						<span class="card-stack">{project.stack}</span>
+					</span>
+				</button>
+			</li>
+		))}
+	</ul>
+
+	{projects.map((project) => (
+		<article class="project" id={project.id} hidden>
+			<header class="project-head">
+				<h2 class="project-name">
+					{project.short} — {project.tagline}
+				</h2>
+				<a
+					class="project-link"
+					href={project.repo}
+					target="_blank"
+					rel="noopener"
+				>
+					View on GitHub &nearr;
+				</a>
+			</header>
+			<p class="project-meta">{project.stack}</p>
+			<p>{project.blurb}</p>
+
+			{project.highlights && (
+				<ul class="project-points">
+					{project.highlights.map((point) => (
+						<li>{point}</li>
+					))}
+				</ul>
+			)}
+
+			{project.transcript && (
+				<figure class="project-term">
+					{/* each command and its output is its own element rather
+					    than one <pre> of newline-joined text: inside a <pre>
+					    the source indentation of this template would be part
+					    of the rendered output. Only .term-out preserves
+					    whitespace, and its expression touches its tags, so
+					    nothing but the captured text gets in */}
+					<div class="term-body">
+						{project.transcript.blocks.map((block) => (
+							<div class="term-block">
+								<p class="term-in">{block.sql}</p>
+								<pre class="term-out">{block.out}</pre>
+							</div>
+						))}
+					</div>
+					<figcaption>{project.transcript.caption}</figcaption>
+				</figure>
+			)}
+
+			{project.shots?.map((shot) => (
+				<figure class="project-shot">
+					<Image
+						src={shot.src}
+						alt={shot.alt}
+						width={1200}
+						format="webp"
+						loading="lazy"
+					/>
+					<figcaption>{shot.caption}</figcaption>
+				</figure>
+			))}
+		</article>
+	))}
 </section>

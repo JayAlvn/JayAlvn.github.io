@@ -1,15 +1,8 @@
-// tab immersion: clicking a tab dives the camera (the .scene wrapper's CSS
-// transform) into the menu, glides the chosen tab to the viewport corner,
-// and reveals its content panel; the Back button reverses it. Also boots
-// the starfall background, which runs at full rate throughout — the dive
-// neither freezes nor slows it.
-import { startTopologyBackground } from './topology-bg.js';
+// tab immersion: clicking a tab glides the chosen tab to the viewport
+// corner, growing it into the section heading, and reveals its content
+// panel; the Back button reverses it.
 import { resetPhotoStrip } from './photo-strip';
-
-// boot the starfall; it runs continuously and at full rate — clicking a tab
-// neither freezes nor slows it, so the Projects spin-reversal is instant and
-// the motion never waits on the tab's glide
-startTopologyBackground(document.getElementById('vanta-bg')!);
+import { closeProject, isProjectOpen, resetProjects } from './project-select';
 
 // Contacts doesn't dive — it pops the social icons out from under
 // itself instead of opening a panel — so dive behavior (active
@@ -19,36 +12,6 @@ const diveTabs = [...document.querySelectorAll<HTMLButtonElement>('.tab')].filte
 );
 const panels = document.querySelectorAll<HTMLElement>('.panel');
 const backBtn = document.getElementById('back-btn')!;
-const scene = document.getElementById('scene')!;
-
-// `diving` marks the ~1.1s tab-glide window. It no longer throttles the
-// starfall — that runs at full rate throughout; it only tells the sketch's
-// slowness detector to ignore this window, so the transition's brief GPU load
-// can't trip a false quality downgrade
-let divingTimer: ReturnType<typeof setTimeout>;
-function startDiveWindow() {
-	document.body.classList.add('diving');
-	clearTimeout(divingTimer);
-	// fallback in case the transitionend event is missed
-	divingTimer = setTimeout(endDiveWindow, 2000);
-}
-
-// clears the dive window once the tab settles, so the slowness detector
-// resumes watching; the starfall's frame rate never changed
-function endDiveWindow() {
-	clearTimeout(divingTimer);
-	document.body.classList.remove('diving');
-}
-
-scene.addEventListener('transitionend', (e) => {
-	// transitionend bubbles from everything inside the scene, and the
-	// tab-label hover is a `transform` on a child — only the travelling
-	// tab's own glide marks the end of the dive
-	const target = e.target as HTMLElement;
-	if (e.propertyName === 'translate' && target.classList.contains('tab')) {
-		endDiveWindow();
-	}
-});
 
 // mirror of the travelling tab's immersion state — keep in sync with
 // CSS. There is no camera any more: the menu used to zoom and tilt as
@@ -57,7 +20,7 @@ scene.addEventListener('transitionend', (e) => {
 const DIVE = {
 	scale: 1.5, // .tab.active-tab growth on the way to the corner
 	corner: { x: 40, y: 40 }, // where the sole tab lands (viewport px)
-	durationMs: 1100, // --dive-duration
+	durationMs: 900, // --dive-duration
 };
 
 // the tab's slot in the resting menu — the frame the glide math is
@@ -111,12 +74,11 @@ diveTabs.forEach((tab) => {
 			panel.hidden = panel.dataset.panel !== target;
 		});
 		if (target === 'photos') resetPhotoStrip();
-		// Projects reverses the sky's spin; every other tab restores it
-		// (topology-bg.ts reads this class each frame)
-		document.body.classList.toggle('stars-reversed', target === 'projects');
+		// always land on the shelf, never on whichever write-up was open
+		// the last time this section was visited
+		if (target === 'projects') resetProjects();
 
 		glideToCorner(tab);
-		startDiveWindow();
 		document.body.classList.add('immersed');
 	});
 });
@@ -168,10 +130,13 @@ window.addEventListener('keydown', (e) => {
 });
 
 function returnHome() {
-	startDiveWindow();
+	// inside Projects, Back steps out of the open write-up first — the
+	// section itself is only left from the shelf
+	if (isProjectOpen()) {
+		closeProject();
+		return;
+	}
 	document.body.classList.remove('immersed');
-	// back to the resting sky's normal spin direction
-	document.body.classList.remove('stars-reversed');
 	diveTabs.forEach((t) => {
 		t.classList.remove('active-tab');
 		t.setAttribute('aria-pressed', 'false');
@@ -189,11 +154,13 @@ function returnHome() {
 
 backBtn.addEventListener('click', returnHome);
 
-// Escape leaves a section as well as the Back button. An enlarged
-// photo or screenshot owns the key first — it closes back to the panel
-// (shot-lightbox.ts) — so this bows out while one is open. Listening in
-// the capture phase guarantees this runs before the lightbox clears
-// `shot-open`, whatever order the scripts happen to be imported in
+// Escape steps back one level, like the Back button, and the levels now
+// nest three deep: an enlarged photo or screenshot owns the key first —
+// it closes back to the panel (shot-lightbox.ts) — so this bows out while
+// one is open; then returnHome closes an open project write-up back to
+// the shelf; only from the shelf does Escape leave the section.
+// Listening in the capture phase guarantees this runs before the lightbox
+// clears `shot-open`, whatever order the scripts happen to be imported in
 window.addEventListener(
 	'keydown',
 	(e) => {

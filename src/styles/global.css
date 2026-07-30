@@ -4,11 +4,60 @@ body {
 	padding: 0;
 	height: 100%;
 	/* near-black navy-green base so any pre-paint flash matches the sky's
-	   darkest stop (the #vanta-bg gradient covers this once mounted) */
-	background: #04060a;
-	color: #ffffff;
+	   darkest stop (the #sky gradient covers this once mounted) */
+	background: var(--page-bg);
+	color: var(--text-strong);
+	/* matches the sky layers' crossfade, so the base behind them keeps step */
+	transition: background-color 0.5s ease;
 	/* hide the text cursor browsers draw in caret-browsing mode */
 	caret-color: transparent;
+}
+
+/* ── Theme tokens ────────────────────────────────────────────────
+   Two settings of one cosmic scene, not an inversion: the light theme is
+   a blue-hour sky, the dark one deep space, and the type stays white
+   over both. Only the sky's brightness and the depth of the shade pooled
+   under the copy actually move — everything below this block is shared.
+
+   Light is the default (the bare :root); the sun/moon switch in the
+   corner adds :root[data-theme='dark'] (see theme-toggle.ts). */
+:root {
+	--page-bg: #050817;
+	--text-strong: #ffffff;
+	--text-body: #cccccc;
+	--text-muted: #888888;
+	--text-faint: rgba(255, 255, 255, 0.5);
+	--border-soft: rgba(255, 255, 255, 0.3);
+	--border-faint: rgba(255, 255, 255, 0.12);
+	--surface-hover: rgba(255, 255, 255, 0.14);
+	--social: rgba(255, 255, 255, 0.55);
+	--social-hover: rgba(255, 255, 255, 0.95);
+	--index: rgba(255, 255, 255, 0.3);
+	--accent: #a9c7d6;
+	/* this sky is the brighter of the two, so the pools of shade the text
+	   sits in run deeper — that's what keeps the white type crisp instead
+	   of forcing the copy to go dark. Tinted a deep violet so they read as
+	   the sky's own shadow rather than grey panels laid over it */
+	--scrim: rgba(16, 18, 32, 0.4);
+	--backdrop: rgba(16, 18, 32, 0.42);
+	--surface: rgba(16, 18, 32, 0.55);
+	--lightbox: rgba(16, 18, 32, 0.88);
+	--lightbox-strong: rgba(16, 18, 32, 0.93);
+	/* carried by the type itself, so the scrims behind it can stay faint */
+	--text-shade: 0 1px 18px rgba(10, 12, 26, 0.75),
+		0 0 5px rgba(10, 12, 26, 0.5);
+}
+
+/* deep space: the sky drops to near-black, so the shade under the type
+   can lift back off it — over this sky the white copy carries itself */
+:root[data-theme='dark'] {
+	--page-bg: #04060a;
+	--scrim: rgba(10, 10, 10, 0.55);
+	--backdrop: rgba(10, 10, 10, 0.65);
+	--surface: rgba(10, 10, 10, 0.55);
+	--lightbox: rgba(10, 10, 10, 0.85);
+	--lightbox-strong: rgba(10, 10, 10, 0.92);
+	--text-shade: 0 1px 16px rgba(0, 0, 0, 0.5), 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -33,10 +82,11 @@ body {
    must move in perfect sync; --pop-ease is the overshoot spring
    the social icons pop out with */
 body {
-	/* single cool ice-blue accent, echoing the blue-white star trails */
-	--accent: #a9c7d6;
-	--dive-duration: 1.1s;
+	--dive-duration: 0.9s;
 	--dive-ease: cubic-bezier(0.45, 0.05, 0.15, 1);
+	/* gentle overshoot for the growing tab-title: it settles a touch past
+	   1.5 and back, rather than easing flatly into its final size */
+	--dive-overshoot: cubic-bezier(0.34, 1.4, 0.64, 1);
 	--zoom-duration: 0.45s;
 	--zoom-ease: cubic-bezier(0.45, 0.05, 0.15, 1);
 	--pop-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -54,15 +104,39 @@ body {
 	z-index: 0;
 }
 
-/* the near-black cosmic sky the star trails are drawn over — the p5
-   canvas that lives in here is transparent, so this gradient shows
-   through. Very dark navy-green-black up top (deep space), with a faint
-   navy-green airglow rising from the bottom horizon, echoing the
-   reference long-exposure photo */
-#vanta-bg {
+/* the default sky: a cool dusty twilight — indigo-slate overhead easing
+   down through blue-violet grey into a pale periwinkle horizon, with only
+   a trace of warmth left in the low glow. Everything stays desaturated;
+   it's the dust, not the saturation, that makes a twilight sky read as
+   real */
+#sky {
 	position: fixed;
 	inset: 0;
 	z-index: 0;
+	background:
+		radial-gradient(
+			125% 90% at 50% 118%,
+			rgba(88, 102, 134, 0.3),
+			transparent 62%
+		),
+		linear-gradient(to bottom, #050817 0%, #131a32 48%, #454d70 100%);
+}
+
+/* dark theme sky: the same gradient shape lowered into deep space — very
+   dark navy-green-black up top, with a faint navy-green airglow rising off
+   the bottom horizon, echoing the reference long-exposure photo.
+
+   It rides as its own layer stacked over the default sky and crossfades on
+   plain opacity. Swapping the gradient outright would snap, and doing it
+   through a View Transition blends the two page snapshots with
+   plus-lighter — which ADDS colour channels on the GPU and can flash a
+   wildly out-of-gamut frame (a green screen) when the compositor hiccups.
+   Fading one layer over the other keeps the blend deterministic. */
+#sky::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
 	background:
 		radial-gradient(
 			130% 85% at 50% 120%,
@@ -70,6 +144,114 @@ body {
 			transparent 60%
 		),
 		linear-gradient(to bottom, #04060a 0%, #06090e 55%, #0a1016 100%);
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}
+
+:root[data-theme='dark'] #sky::before {
+	opacity: 1;
+}
+
+/* ── Theme switch ────────────────────────────────────────────────
+   A sun/moon docked in the same top-right corner the Back button uses —
+   the two hand off rather than coexist: this is the resting-state
+   occupant of that corner, and Back displaces it on a dive. Same fixed
+   inset, same footprint, opposite trigger, so the corner always holds
+   exactly one control and the swap reads as a single system rather than
+   two unrelated widgets. It shows the theme it will switch TO — moon on
+   the light sky, sun on the dark one — so it reads as an action rather
+   than a status light.
+
+   The icon morphs instead of swapping: one disc all the way through,
+   with a masked "bite" that slides off it and a ring of rays that blooms
+   out of it. Both halves ride transform/opacity only, so the whole change
+   runs on the compositor alongside the sky's crossfade. */
+.theme-toggle {
+	position: fixed;
+	top: 2.5rem;
+	right: 2.5rem;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	padding: 0;
+	border: 1px solid var(--border-soft);
+	border-radius: 50%;
+	background: var(--surface);
+	color: var(--text-strong);
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	opacity: 1;
+	transition: opacity 0.4s ease, transform 0.4s ease, background 0.25s ease;
+}
+
+/* mirrors .back's resting state exactly (opacity 0, lifted 10px) but on
+   the opposite trigger, so the two swap places instead of one popping in
+   over the other */
+body.immersed .theme-toggle {
+	opacity: 0;
+	transform: translateY(-10px);
+	pointer-events: none;
+}
+
+.theme-toggle:hover {
+	background: var(--surface-hover);
+}
+
+.theme-icon {
+	width: 1.3rem;
+	height: 1.3rem;
+	opacity: 0.85;
+	overflow: visible;
+	transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.theme-toggle:hover .theme-icon,
+.theme-toggle:focus-visible .theme-icon {
+	opacity: 1;
+	filter: drop-shadow(0 0 7px var(--accent));
+}
+
+/* every moving part shares one timing so the bite's slide and the rays'
+   bloom read as a single gesture */
+.ti-bite,
+.ti-orb,
+.ti-rays {
+	transform-box: fill-box;
+	transform-origin: center;
+	transition: transform 0.45s var(--pop-ease), opacity 0.3s ease;
+}
+
+/* light theme (default) → the moon: the bite sits over the disc carving
+   the crescent, and the rays are folded away inside it */
+.ti-bite {
+	transform: translate(0, 0);
+}
+
+.ti-orb {
+	transform: scale(1);
+}
+
+.ti-rays {
+	opacity: 0;
+	transform: rotate(-60deg) scale(0.35);
+}
+
+/* dark theme → the sun: the bite slides off the disc, the disc pulls in
+   a little to leave room, and the rays bloom out of it */
+:root[data-theme='dark'] .ti-bite {
+	transform: translate(9px, -9px);
+}
+
+:root[data-theme='dark'] .ti-orb {
+	transform: scale(0.8);
+}
+
+:root[data-theme='dark'] .ti-rays {
+	opacity: 1;
+	transform: none;
 }
 
 /* soft darkening under the text zones so bright strand bundles
@@ -79,10 +261,14 @@ body {
 	inset: 0;
 	z-index: 0;
 	pointer-events: none;
+	/* broad and soft rather than a tight pool: a wide ellipse with a long
+	   falloff reads as the sky's own darker centre instead of an oval panel
+	   laid over it. The heavy lifting for legibility is done by the type's
+	   own shadow (--text-shade), which lets this stay a whisper */
 	background: radial-gradient(
-		ellipse 48rem 32rem at 50% 50%,
-		rgba(10, 10, 10, 0.75),
-		transparent 70%
+		ellipse 72rem 48rem at 50% 50%,
+		var(--scrim),
+		transparent 82%
 	);
 }
 
@@ -98,6 +284,18 @@ body {
 	align-items: flex-start;
 	gap: 2rem;
 	z-index: 10;
+}
+
+/* the menu type and panel copy carry their own shadow, so legibility no
+   longer depends on a heavy scrim pooled behind them */
+.name,
+.email,
+.tab,
+.panel,
+.shot-caption,
+.photos-note,
+.photos-hint {
+	text-shadow: var(--text-shade);
 }
 
 .name {
@@ -125,7 +323,7 @@ body {
 	font-size: 0.85rem;
 	letter-spacing: 0.04em;
 	line-height: 1.4;
-	color: rgba(255, 255, 255, 0.5);
+	color: var(--text-faint);
 	cursor: pointer;
 	text-underline-offset: 3px;
 	transition: color 0.25s ease;
@@ -138,7 +336,7 @@ body {
 .email:hover {
 	color: var(--accent);
 	text-decoration: underline;
-	text-decoration-color: rgba(169, 199, 214, 0.6);
+	text-decoration-color: var(--accent);
 }
 
 /* confirmation flashed beside the address after a copy; absolutely
@@ -149,7 +347,7 @@ body {
 	left: 100%;
 	top: 0;
 	margin-left: 0.7rem;
-	color: rgba(255, 255, 255, 0.5);
+	color: var(--text-faint);
 	opacity: 0;
 	transition: opacity 0.25s ease;
 }
@@ -168,7 +366,7 @@ body {
 .tab {
 	background: none;
 	border: none;
-	color: #ffffff;
+	color: var(--text-strong);
 	font-family: inherit;
 	font-size: 1.8rem;
 	letter-spacing: 0.04em;
@@ -195,7 +393,7 @@ body {
 	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 	font-size: 0.72rem;
 	letter-spacing: 0.1em;
-	color: rgba(255, 255, 255, 0.3);
+	color: var(--index);
 	transition: color 0.25s ease, opacity 0.3s ease;
 }
 
@@ -225,7 +423,7 @@ body {
 .email,
 .tab,
 .socials {
-	transition: filter 0.5s ease;
+	transition: filter 0.4s ease;
 	will-change: filter;
 }
 
@@ -237,9 +435,9 @@ body {
 .tab {
 	translate: 0 0;
 	scale: 1;
-	transition: filter 0.5s ease,
+	transition: filter 0.4s ease,
 		translate var(--dive-duration) var(--dive-ease),
-		scale var(--dive-duration) var(--dive-ease);
+		scale var(--dive-duration) var(--dive-overshoot);
 	will-change: filter, translate, scale;
 }
 
@@ -295,16 +493,16 @@ body.immersed .tab::before {
 	inset: 0;
 	z-index: -1;
 	background: radial-gradient(
-		ellipse 50% 45% at 62% 52%,
-		rgba(10, 10, 10, 0.65),
-		transparent 75%
+		ellipse 62% 56% at 62% 52%,
+		var(--backdrop),
+		transparent 85%
 	);
 }
 
 body.immersed .content {
 	opacity: 1;
 	pointer-events: auto;
-	transition: opacity 0.6s ease 0.5s;
+	transition: opacity 0.5s ease 0.35s;
 }
 
 .back {
@@ -312,12 +510,12 @@ body.immersed .content {
 	top: 2.5rem;
 	right: 2.5rem;
 	z-index: 2;
-	background: rgba(10, 10, 10, 0.55);
-	color: #ffffff;
+	background: var(--surface);
+	color: var(--text-strong);
 	font-family: inherit;
 	font-size: 0.95rem;
 	letter-spacing: 0.04em;
-	border: 1px solid rgba(255, 255, 255, 0.3);
+	border: 1px solid var(--border-soft);
 	border-radius: 999px;
 	padding: 0.55rem 1.3rem;
 	cursor: pointer;
@@ -329,14 +527,14 @@ body.immersed .content {
 }
 
 .back:hover {
-	background: rgba(255, 255, 255, 0.14);
+	background: var(--surface-hover);
 }
 
 body.immersed .back {
 	opacity: 1;
 	transform: none;
 	pointer-events: auto;
-	transition: opacity 0.5s ease 0.6s, transform 0.5s ease 0.6s,
+	transition: opacity 0.45s ease 0.5s, transform 0.45s ease 0.5s,
 		background 0.25s ease;
 }
 
@@ -347,9 +545,60 @@ body.immersed .back {
 	   flow and scroll instead of clipping at the top */
 	margin-block: auto;
 	padding-block: 4rem;
-	/* rises into place each time it is unhidden; backwards fill
-	   holds the start state during the dive's delay */
-	animation: panel-in 0.6s ease 0.5s backwards;
+}
+
+/* content rises in a short stagger rather than as one block, so the
+   landing feels as composed as the dive's exit. Applied to a panel's rows
+   (CV) and to the parts of the Projects article; the Photos filmstrip is
+   left to the plain content crossfade. Backwards fill holds each row's
+   start state through its delay */
+.panel:not(.panel-projects):not(.panel-photos) > * {
+	animation: panel-in 0.5s ease backwards;
+	animation-delay: 0.4s;
+}
+.panel:not(.panel-projects):not(.panel-photos) > *:nth-child(2) {
+	animation-delay: 0.48s;
+}
+.panel:not(.panel-projects):not(.panel-photos) > *:nth-child(3) {
+	animation-delay: 0.56s;
+}
+.panel:not(.panel-projects):not(.panel-photos) > *:nth-child(4) {
+	animation-delay: 0.64s;
+}
+.panel:not(.panel-projects):not(.panel-photos) > *:nth-child(n + 5) {
+	animation-delay: 0.72s;
+}
+
+/* the shelf cards arrive on the same wave as any other panel's rows, each
+   one a beat behind the last (--delay is set per card in the markup) */
+.project-card {
+	animation: panel-in 0.5s ease backwards;
+	animation-delay: var(--delay);
+}
+
+/* returning from a write-up, though, the cards are the response to the
+   click rather than the tail of a dive — the long fuse above would hold
+   them blank for the best part of half a second and read as a dropped
+   press, so the shelf comes straight back (project-select.ts sets this) */
+.panel-projects.shelf-quick .project-card {
+	animation-duration: 0.35s;
+	animation-delay: var(--quick-delay);
+}
+
+/* a write-up opens straight from the shelf with no dive to wait out, so
+   its rows follow each other on a much shorter fuse than a panel's */
+.project > * {
+	animation: panel-in 0.4s ease backwards;
+	animation-delay: 0.02s;
+}
+.project > *:nth-child(2) {
+	animation-delay: 0.08s;
+}
+.project > *:nth-child(3) {
+	animation-delay: 0.14s;
+}
+.project > *:nth-child(n + 4) {
+	animation-delay: 0.2s;
 }
 
 .panel h1 {
@@ -361,7 +610,7 @@ body.immersed .back {
 .panel p {
 	font-size: 1rem;
 	line-height: 1.6;
-	color: #cccccc;
+	color: var(--text-body);
 	font-family: sans-serif;
 }
 
@@ -383,7 +632,7 @@ body.immersed .back {
 	margin: 0;
 	font-size: 0.9rem;
 	letter-spacing: 0.02em;
-	color: #888888;
+	color: var(--text-muted);
 }
 
 .content:has(.panel-photos:not([hidden])) .photos-hint {
@@ -401,7 +650,7 @@ body.immersed .back {
 	margin: 0;
 	font-size: 0.95rem;
 	letter-spacing: 0.02em;
-	color: #888888;
+	color: var(--text-muted);
 	opacity: 0;
 	transition: opacity 0.3s ease;
 }
@@ -459,29 +708,29 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 }
 
 .cv-role {
-	color: #ffffff;
+	color: var(--text-strong);
 	font-size: 1.05rem;
 }
 
 .cv-meta {
-	color: #888888;
+	color: var(--text-muted);
 	font-size: 0.85rem;
 }
 
 .panel p strong {
-	color: #ffffff;
+	color: var(--text-strong);
 	font-weight: 600;
 }
 
 .cv-download,
 .project-link {
 	display: inline-block;
-	color: #ffffff;
+	color: var(--text-strong);
 	font-size: 0.95rem;
 	letter-spacing: 0.04em;
 	text-decoration: none;
-	background: rgba(10, 10, 10, 0.55);
-	border: 1px solid rgba(255, 255, 255, 0.3);
+	background: var(--surface);
+	border: 1px solid var(--border-soft);
 	border-radius: 999px;
 	padding: 0.55rem 1.3rem;
 	transition: background 0.25s ease;
@@ -489,13 +738,138 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 
 .cv-download:hover,
 .project-link:hover {
-	background: rgba(255, 255, 255, 0.14);
+	background: var(--surface-hover);
 }
 
 /* wider column than the CV so the app screenshots stay readable, and
    so a project title and its repo link fit on one line */
 .panel-projects {
 	max-width: 55rem;
+}
+
+/* ── The project shelf ───────────────────────────────────────────
+   Projects opens on a row of cards to pick from rather than one long
+   scroll of every write-up. Each card is a picture, a name and a line to
+   choose by; clicking one swaps the shelf for that project's full entry
+   (project-select.ts), and Back returns here before it leaves the
+   section. auto-fit means the row simply becomes a column when there
+   isn't width for two. */
+.project-shelf {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+	gap: 1.6rem;
+}
+
+/* the shelf and the open write-up are alternates, never both at once */
+.panel-projects.project-open .project-shelf {
+	display: none;
+}
+
+.project-card {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	overflow: hidden;
+	text-align: left;
+	font-family: inherit;
+	color: var(--text-strong);
+	background: var(--surface);
+	border: 1px solid var(--border-faint);
+	border-radius: 8px;
+	cursor: pointer;
+	/* transform and border only — a card lifting toward the cursor is the
+	   whole hover, and it stays on the compositor */
+	transition: transform 0.3s var(--pop-ease), border-color 0.3s ease,
+		background 0.3s ease;
+}
+
+.project-card:hover,
+.project-card:focus-visible {
+	transform: translateY(-5px);
+	border-color: var(--border-soft);
+	background: var(--surface-hover);
+}
+
+/* the picture is the thing you actually shop by, so it leads the card and
+   crops to a fixed shape — the two screenshots have very different native
+   proportions and would otherwise make the row ragged. Anchored to the top
+   because that is where each one's subject sits */
+.card-shot {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 10;
+	object-fit: cover;
+	object-position: top center;
+	border-bottom: 1px solid var(--border-faint);
+}
+
+/* stand-in for a project whose screenshots haven't been taken yet: the
+   card's own number, held in the exact box a picture would occupy so the
+   row of cards stays level */
+.card-shot-blank {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 2.6rem;
+	letter-spacing: 0.12em;
+	color: var(--index);
+	background: linear-gradient(
+		140deg,
+		rgba(255, 255, 255, 0.06),
+		rgba(255, 255, 255, 0.015) 60%
+	);
+}
+
+.card-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	padding: 1.1rem 1.2rem 1.25rem;
+}
+
+.card-index {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.68rem;
+	letter-spacing: 0.1em;
+	color: var(--index);
+}
+
+.card-name {
+	font-size: 1.35rem;
+	letter-spacing: 0.03em;
+}
+
+.card-tagline {
+	font-size: 0.9rem;
+	color: var(--text-body);
+	letter-spacing: 0.02em;
+}
+
+.card-hook {
+	margin-top: 0.35rem;
+	font-family: sans-serif;
+	font-size: 0.9rem;
+	line-height: 1.5;
+	color: var(--text-body);
+}
+
+/* the full technology list, kept last and quietest — it's for confirming a
+   choice, not making one. Pushed to the card's foot so the two cards'
+   stack lines sit level however long the hook above them runs */
+.card-stack {
+	margin-top: auto;
+	padding-top: 0.85rem;
+	font-family: sans-serif;
+	font-size: 0.72rem;
+	line-height: 1.45;
+	color: var(--text-muted);
 }
 
 /* the repo link rides beside the title rather than trailing the
@@ -522,10 +896,114 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 	margin: 0;
 }
 
+/* kept inside the heading rather than outdented into the margin the way
+   the menu's numbers are: the panel is a centred column, so a hanging
+   number would be the first thing clipped on a narrow viewport */
+.project-index {
+	margin-right: 0.9rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.72rem;
+	letter-spacing: 0.1em;
+	color: var(--index);
+	vertical-align: middle;
+}
+
 .project .project-meta {
-	color: #888888;
+	color: var(--text-muted);
 	font-size: 0.85rem;
 	margin: 0 0 1rem;
+}
+
+/* the specifics under a write-up's opening paragraph. Marked with the same
+   monospace gutter the menu and the cards use rather than a bullet glyph,
+   so the list belongs to the rest of the page */
+.project-points {
+	margin: 1.5rem 0 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.project-points li {
+	position: relative;
+	padding-left: 1.6rem;
+	font-family: sans-serif;
+	font-size: 0.95rem;
+	line-height: 1.6;
+	color: var(--text-body);
+}
+
+.project-points li::before {
+	content: '—';
+	position: absolute;
+	left: 0;
+	color: var(--accent);
+}
+
+/* a REPL session shown as real text rather than a screenshot of one: it
+   stays sharp at any zoom, recolours with the theme, and can be selected
+   and copied. Long lines scroll inside the block so the page itself never
+   gains a horizontal scrollbar */
+.project-term {
+	margin: 1.75rem 0;
+}
+
+.term-body {
+	padding: 1.1rem 1.3rem;
+	background: var(--surface);
+	border: 1px solid var(--border-faint);
+	border-radius: 4px;
+	font-size: 0.82rem;
+	line-height: 1.55;
+	/* the aligned result tables are drawn with spaces — a proportional
+	   fallback would break every column */
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	user-select: text;
+}
+
+.term-block + .term-block {
+	margin-top: 1.15rem;
+}
+
+/* the typed line, marked off from the engine's output by the prompt and
+   the brighter ink. Qualified by .term-body only to out-specify
+   `.panel p`, which would otherwise pull this back to the panel's
+   proportional body font mid-terminal */
+.term-body .term-in {
+	margin: 0;
+	color: var(--text-strong);
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	/* a long query wraps rather than pushing the block sideways; it has no
+	   column alignment to protect, unlike the output below it */
+	overflow-wrap: anywhere;
+}
+
+.term-in::before {
+	content: '> ';
+	color: var(--accent);
+}
+
+/* the result tables: whitespace is load-bearing here, so they scroll
+   inside the block instead of wrapping */
+.term-out {
+	margin: 0.3rem 0 0;
+	overflow-x: auto;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	color: var(--text-body);
+}
+
+.project-term figcaption {
+	font-family: sans-serif;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+	line-height: 1.5;
+	margin-top: 0.6rem;
 }
 
 .project-shot {
@@ -536,12 +1014,12 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 	width: 100%;
 	height: auto;
 	border-radius: 4px;
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: 1px solid var(--border-faint);
 }
 
 .project-shot figcaption {
 	font-family: sans-serif;
-	color: #888888;
+	color: var(--text-muted);
 	font-size: 0.85rem;
 	line-height: 1.5;
 	margin-top: 0.6rem;
@@ -579,7 +1057,7 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 	position: fixed;
 	inset: 0;
 	z-index: 50;
-	background: rgba(10, 10, 10, 0.85);
+	background: var(--lightbox);
 	opacity: 0;
 	pointer-events: none;
 	cursor: zoom-out;
@@ -594,7 +1072,7 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 /* a touch darker while a description is being read, for legibility
    of the text over the dimmed strip photos */
 .shot-backdrop:has(+ .shot-caption.open) {
-	background: rgba(10, 10, 10, 0.92);
+	background: var(--lightbox-strong);
 }
 
 /* description column beside an enlarged strip photo; the lightbox
@@ -607,7 +1085,7 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 	z-index: 51;
 	font-size: 1rem;
 	line-height: 1.7;
-	color: #cccccc;
+	color: var(--text-body);
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity var(--zoom-duration) ease;
@@ -622,7 +1100,7 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 	font-size: 1.3rem;
 	font-weight: normal;
 	letter-spacing: 0.04em;
-	color: #ffffff;
+	color: var(--text-strong);
 	margin: 0 0 1.1rem;
 }
 
@@ -630,7 +1108,7 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 	margin: 0;
 	font-size: 0.9rem;
 	line-height: 1.75;
-	color: #ffffff;
+	color: var(--text-strong);
 }
 
 /* the corner tab and Back button paint above the backdrop (their
@@ -653,7 +1131,7 @@ body.shot-open .back {
 
 .social {
 	display: inline-flex;
-	color: rgba(255, 255, 255, 0.55);
+	color: var(--social);
 	/* resting state: tucked up under the Contacts tab, invisible.
 	   visibility (not display) keeps the slot, lets clicks fall
 	   through, and drops the hidden links from the tab order */
@@ -688,17 +1166,13 @@ body.shot-open .back {
 	--pop-delay: 0.12s;
 }
 
-.socials.open .social:nth-child(4) {
-	--pop-delay: 0.18s;
-}
-
 .social svg {
 	width: 1.7rem;
 	height: 1.7rem;
 }
 
 .social:hover {
-	color: rgba(255, 255, 255, 0.95);
+	color: var(--social-hover);
 	transform: scale(1.15);
 }
 
@@ -710,5 +1184,52 @@ body.shot-open .back {
 	to {
 		opacity: 1;
 		transform: none;
+	}
+}
+
+/* accessibility: honour prefers-reduced-motion. The dive becomes a quick
+   crossfade — the chosen tab snaps to the corner (an instant position
+   change is acceptable under this setting; it's the sustained glide/scale
+   and the rises we drop), the on-load emerge is neutralised, and content
+   fades in without travelling or staggering */
+@media (prefers-reduced-motion: reduce) {
+	/* transform too, not just opacity: cancelling the animation strands
+	   these at the keyframes' scale(0.9) start state otherwise */
+	.name,
+	.email {
+		animation: none;
+		opacity: 1;
+		transform: none;
+	}
+
+	/* the switch still changes state, it just stops travelling to get there */
+	.ti-bite,
+	.ti-orb,
+	.ti-rays {
+		transition: opacity 0.2s ease;
+	}
+
+	.tab {
+		animation: none;
+		opacity: 1;
+		transform: none;
+		transition: filter 0.2s ease;
+	}
+
+	.panel:not(.panel-projects):not(.panel-photos) > *,
+	.panel-projects .project > * {
+		animation: none;
+	}
+
+	body.immersed .content {
+		transition: opacity 0.25s ease;
+	}
+
+	.back,
+	body.immersed .back,
+	.theme-toggle,
+	body.immersed .theme-toggle {
+		transform: none;
+		transition: opacity 0.25s ease, background 0.25s ease;
 	}
 }

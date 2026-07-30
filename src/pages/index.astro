@@ -22,11 +22,54 @@ import '../styles/global.css';
 		/>
 	</head>
 	<body>
-		<div id="vanta-bg" aria-hidden="true"></div>
+		<div id="sky" aria-hidden="true"></div>
 
 		<Sidebar />
 
 		<button class="back" id="back-btn">&larr; Back</button>
+
+		{/* sun ⇄ moon theme switch, docked in the same corner Back occupies —
+		    the two hand off rather than coexist: this fades out exactly as
+		    Back fades in on a dive, and back in on the way home. It shows
+		    the theme it will switch TO, so the icon morphs (styles in
+		    global.css) rather than swapping between two glyphs */}
+		<button
+			class="theme-toggle"
+			id="theme-toggle"
+			type="button"
+			aria-label="Switch to dark theme"
+			aria-pressed="false"
+		>
+			<svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+				<mask id="theme-crescent">
+					<rect x="0" y="0" width="24" height="24" fill="#fff" />
+					<circle class="ti-bite" cx="17" cy="7" r="7" fill="#000" />
+				</mask>
+				<circle
+					class="ti-orb"
+					cx="12"
+					cy="12"
+					r="6"
+					fill="currentColor"
+					mask="url(#theme-crescent)"
+				/>
+				<g
+					class="ti-rays"
+					stroke="currentColor"
+					stroke-width="1.7"
+					stroke-linecap="round"
+				>
+					<line x1="12" y1="1.5" x2="12" y2="3.6" />
+					<line x1="12" y1="20.4" x2="12" y2="22.5" />
+					<line x1="1.5" y1="12" x2="3.6" y2="12" />
+					<line x1="20.4" y1="12" x2="22.5" y2="12" />
+					<line x1="4.6" y1="4.6" x2="6.1" y2="6.1" />
+					<line x1="17.9" y1="17.9" x2="19.4" y2="19.4" />
+					<line x1="4.6" y1="19.4" x2="6.1" y2="17.9" />
+					<line x1="17.9" y1="6.1" x2="19.4" y2="4.6" />
+				</g>
+			</svg>
+		</button>
 
 		<main class="content">
 			<ProjectsPanel />
@@ -41,6 +84,7 @@ import '../styles/global.css';
 			import '../scripts/photo-strip';
 			import '../scripts/shot-lightbox';
 			import '../scripts/copy-email';
+			import '../scripts/theme-toggle';
 		</script>
 	</body>
 </html>
