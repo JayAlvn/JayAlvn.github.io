@@ -21,7 +21,14 @@ const cards = [...document.querySelectorAll<HTMLButtonElement>('.project-card')]
 // been dropped.
 function show(id: string | null, quick: boolean) {
 	details.forEach((d) => {
-		d.hidden = d.id !== id;
+		const hide = d.id !== id;
+		// display: none does NOT pause media — a demo left running would keep
+		// its audio going from an article nobody can see. Pause on the way
+		// out, keeping the playhead so returning resumes where it left off
+		if (hide && !d.hidden) {
+			d.querySelectorAll('video').forEach((v) => v.pause());
+		}
+		d.hidden = hide;
 	});
 	panel?.classList.toggle('project-open', id !== null);
 	panel?.classList.toggle('shelf-quick', quick);

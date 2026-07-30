@@ -115,6 +115,31 @@ import { projects } from '../data/projects';
 					<figcaption>{shot.caption}</figcaption>
 				</figure>
 			))}
+
+			{project.video && (
+				<figure class="project-video">
+					{/* preload="none" is the whole trick: the file is several
+					    megabytes, and every project's write-up is in the DOM
+					    from first paint, so without it a visitor who never
+					    opens this project still pays for the video. The poster
+					    is the only thing fetched until Play is pressed — and
+					    the mp4 is muxed with +faststart, so playback begins
+					    while the rest is still arriving rather than after.
+					    playsinline keeps iOS from hijacking to fullscreen. */}
+					<video
+						class="video-player"
+						controls
+						preload="none"
+						playsinline
+						poster={project.video.poster}
+						aria-label={project.video.alt}
+					>
+						<source src={project.video.src} type="video/mp4" />
+						<a href={project.video.src}>Download the demo video</a>
+					</video>
+					<figcaption>{project.video.caption}</figcaption>
+				</figure>
+			)}
 		</article>
 	))}
 </section>

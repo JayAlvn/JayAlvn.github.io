@@ -27,6 +27,23 @@ export type Shot = {
 /** one command typed at a REPL and what it printed back */
 export type TranscriptBlock = { sql: string; out: string };
 
+/**
+ * A screen recording of the project running. Unlike screenshots these are
+ * plain `public/` paths, not ESM imports: astro:assets only processes
+ * images, so the file is served byte-for-byte as it sits on disk. The
+ * consequence is no content hash in the filename — replacing a video keeps
+ * the same URL, so a hard refresh may be needed to see the new one.
+ */
+export type Video = {
+	/** absolute path under public/ */
+	src: string;
+	/** frame shown before playback; the only thing fetched on page load */
+	poster: string;
+	/** describes the recording for anyone who can't watch it */
+	alt: string;
+	caption: string;
+};
+
 export type Project = {
 	id: string;
 	/** the name on the shelf card — kept short enough to read at a glance */
@@ -51,6 +68,8 @@ export type Project = {
 	shots?: Shot[];
 	/** rendered as a terminal block — for projects whose interface is text */
 	transcript?: { blocks: TranscriptBlock[]; caption: string };
+	/** a run-through of the thing actually working, shown last */
+	video?: Video;
 };
 
 export const projects: Project[] = [
@@ -79,6 +98,13 @@ export const projects: Project[] = [
 					'Clean document — a normal reference file is correctly scored 0 / LOW; the model does not invent risk where there is none.',
 			},
 		],
+		video: {
+			src: '/video/frag-demo.mp4',
+			poster: '/video/frag-demo-poster.webp',
+			alt: 'Screen recording of F-RAG ingesting the EU AI Act as a PDF, answering a question about Article 56, and returning six ranked sources with a confidence score and the cited passages',
+			caption:
+				'The pipeline end to end — the EU AI Act is ingested and chunked, a question is put to it, and the answer returns ranked across six retrieved sources with a confidence score, a live token budget, and the exact passages it drew from. 2 min 26 s, no narration.',
+		},
 	},
 	{
 		id: 'sql-engine',

@@ -1006,6 +1006,35 @@ body.immersed .content:has(.panel-photos:not([hidden])) .photos-note {
 	margin-top: 0.6rem;
 }
 
+/* the demo recording, framed exactly like a screenshot so the write-up
+   reads as one sequence rather than a gallery with a video bolted on */
+.project-video {
+	margin: 1.75rem 0;
+}
+
+.video-player {
+	display: block;
+	width: 100%;
+	height: auto;
+	/* the box is reserved before a single byte of video arrives, so the
+	   caption below never jumps when the poster paints */
+	aspect-ratio: 16 / 9;
+	border-radius: 4px;
+	border: 1px solid var(--border-faint);
+	/* the poster is letterboxed rather than cropped — this is a UI
+	   recording, and clipping the edges would cut off the panels */
+	object-fit: contain;
+	background: #000;
+}
+
+.project-video figcaption {
+	font-family: sans-serif;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+	line-height: 1.5;
+	margin-top: 0.6rem;
+}
+
 .project-shot {
 	margin: 1.75rem 0;
 }
